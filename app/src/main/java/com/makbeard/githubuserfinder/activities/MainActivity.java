@@ -31,6 +31,7 @@ import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
+import rx.subscriptions.CompositeSubscription;
 
 import static java.lang.String.format;
 
@@ -41,7 +42,8 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.search_edittext)
     EditText mSearchEditText;
 
-    private Subscription mSubscription;
+    private CompositeSubscription mSubscriptions;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,9 +52,12 @@ public class MainActivity extends AppCompatActivity {
 
         ButterKnife.bind(this);
 
-        mSubscription = RxTextView.textChangeEvents(mSearchEditText)
+        mSubscriptions = new CompositeSubscription();
+
+        mSubscriptions.add(RxTextView.textChangeEvents(mSearchEditText)
                 .debounce(1000, TimeUnit.MILLISECONDS)
-                .subscribe(getSearchObserver());
+                .subscribe(getSearchObserver())
+        );
 
         //Создаём interceptor для анализа логов
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
@@ -73,27 +78,31 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         GitHubApi gitHubApi = retrofit.create(GitHubApi.class);
-        gitHubApi.getUsersList("MakBeard")
+        mSubscriptions.add(gitHubApi.getUsersList("makbeard")
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<RootUsersResponse>() {
-                    @Override
-                    public void onCompleted() {
+                .subscribe(getUsersSubscriber()));
+    }
 
-                    }
+    private Subscriber<RootUsersResponse> getUsersSubscriber() {
+        return new Subscriber<RootUsersResponse>() {
+            @Override
+            public void onCompleted() {
 
-                    @Override
-                    public void onError(Throwable e) {
+            }
 
-                    }
+            @Override
+            public void onError(Throwable e) {
 
-                    @Override
-                    public void onNext(RootUsersResponse rootUsersResponse) {
-                        for (GitUser gitUser : rootUsersResponse.items) {
-                            Log.d(TAG, "onNext: " + gitUser.getLogin() + " " + gitUser.getAvatarUrl() + " " + gitUser.getHtmlUrl());
-                        }
-                    }
-                });
+            }
+
+            @Override
+            public void onNext(RootUsersResponse rootUsersResponse) {
+                for (GitUser gitUser : rootUsersResponse.items) {
+                    Log.d(TAG, "onNext: " + gitUser.getLogin() + " " + gitUser.getAvatarUrl() + " " + gitUser.getHtmlUrl());
+                }
+            }
+        };
     }
 
     private Observer<TextViewTextChangeEvent> getSearchObserver() {
@@ -118,6 +127,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mSubscription.unsubscribe();
+        mSubscriptions.unsubscribe();
     }
 }
