@@ -1,5 +1,7 @@
 package com.makbeard.githubuserfinder.activities;
 
+import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.SearchView;
+import android.widget.SimpleCursorAdapter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -41,13 +44,10 @@ import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
-import static java.lang.String.format;
-
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MA_MAKTAG";
 
-    @BindView(R.id.search_edittext) EditText mSearchEditText;
     SearchView mSearchView;
 
     private Subscription mSubscription;
@@ -65,8 +65,6 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-
 
         //Создаём interceptor для анализа логов
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
@@ -89,36 +87,56 @@ public class MainActivity extends AppCompatActivity {
 
         mGitHubApi = retrofit.create(GitHubApi.class);
 
+        //Настраиваем отображение RecyclerView
         mRecyclerViewAdapter = new UsersRecyclerViewAdapter(mGitUsersList);
         mRecyclerView = (RecyclerView) findViewById(R.id.gitusers_recyclerview);
         mRecyclerView.setAdapter(mRecyclerViewAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
 
+    }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
 
-        //Создаём слушателя для поля ввода
-        mSubscription = RxTextView.textChangeEvents(mSearchEditText)
+        mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+
+        mSubscription = RxSearchView.queryTextChanges(mSearchView)
                 .debounce(1000, TimeUnit.MILLISECONDS)
-                .filter(new Func1<TextViewTextChangeEvent, Boolean>() {
+                .filter(new Func1<CharSequence, Boolean>() {
                     @Override
-                    public Boolean call(TextViewTextChangeEvent textViewTextChangeEvent) {
-                        return textViewTextChangeEvent.text().length() > 0;
+                    public Boolean call(CharSequence charSequence) {
+                        return !TextUtils.isEmpty(charSequence);
                     }
                 })
-                .doOnNext(new Action1<TextViewTextChangeEvent>() {
+                .doOnNext(new Action1<CharSequence>() {
                     @Override
-                    public void call(TextViewTextChangeEvent textViewTextChangeEvent) {
-                        mGitHubApi.getUsersList(textViewTextChangeEvent.text().toString())
+                    public void call(CharSequence charSequence) {
+                        mGitHubApi.getUsersList(charSequence.toString())
                                 .subscribeOn(Schedulers.newThread())
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(getUsersSubscriber());
                     }
                 })
                 .subscribe();
+        String[] colNames = new String[] {"_id", "Login"};
+        MatrixCursor cursor = new MatrixCursor(colNames);
+        cursor.addRow(new String[]{"1", "'Murica"});
+        cursor.addRow(new String[]{"2", "Canada"});
+        cursor.addRow(new String[]{"3", "Denmark"});
 
-
-
+        mSearchView.setSuggestionsAdapter(
+                new SimpleCursorAdapter(
+                        this,
+                        android.R.layout.simple_list_item_1,
+                        cursor,
+                        new String[] {"Login"},
+                        new int[] {android.R.id.text1},
+                        0)
+        );
+        return true;
     }
 
     private Subscriber<RootUsersResponse> getUsersSubscriber() {
@@ -138,7 +156,6 @@ public class MainActivity extends AppCompatActivity {
                 mRecyclerViewAdapter.updateAll(rootUsersResponse.items);
                 for (GitUser gitUser : rootUsersResponse.items) {
                     Log.d(TAG, "onNext: " + gitUser.getLogin() + " " + gitUser.getAvatarUrl() + " " + gitUser.getHtmlUrl());
-
                 }
             }
         };
@@ -148,42 +165,5 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         mSubscription.unsubscribe();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-
-        mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-
-        RxSearchView.queryTextChanges(mSearchView)
-                .debounce(1000, TimeUnit.MILLISECONDS)
-                .filter(new Func1<CharSequence, Boolean>() {
-                    @Override
-                    public Boolean call(CharSequence charSequence) {
-                        return !TextUtils.isEmpty(charSequence);
-                    }
-                })
-                .doOnNext(new Action1<CharSequence>() {
-                    @Override
-                    public void call(CharSequence charSequence) {
-                        mGitHubApi.getUsersList(charSequence.toString())
-                                .subscribeOn(Schedulers.newThread())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(getUsersSubscriber());
-                    }
-                })
-                .subscribe();
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-
-        return super.onOptionsItemSelected(item);
     }
 }
