@@ -22,16 +22,27 @@
             app:contentScrim="?attr/colorPrimary">
 
             <!--"scroll|exitUntilCollapsed"-->
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="96dp"
+                app:layout_collapseMode="pin"
+                app:popupTheme="@style/AppTheme.PopupOverlay" />
 <!--
+
             <com.quinny898.library.persistentsearch.SearchBox
                 android:id="@+id/searchbox"
                 android:layout_width="wrap_content"
                 android:layout_height="96dp"/>
-            -->
+-->
+
             <EditText
                 android:id="@+id/search_edittext"
                 android:layout_width="match_parent"
-                android:layout_height="96dp" />
+                android:layout_height="96dp"
+                android:visibility="gone"/>
+
 
         </android.support.design.widget.CollapsingToolbarLayout>
     </android.support.design.widget.AppBarLayout>
