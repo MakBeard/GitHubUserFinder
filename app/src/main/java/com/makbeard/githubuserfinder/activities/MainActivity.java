@@ -1,7 +1,5 @@
 package com.makbeard.githubuserfinder.activities;
 
-import android.database.Cursor;
-import android.database.MatrixCursor;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -10,16 +8,11 @@ import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.EditText;
 import android.widget.SearchView;
-import android.widget.SimpleCursorAdapter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.jakewharton.rxbinding.widget.RxSearchView;
-import com.jakewharton.rxbinding.widget.RxTextView;
-import com.jakewharton.rxbinding.widget.TextViewTextChangeEvent;
 import com.makbeard.githubuserfinder.GitHubApi;
 import com.makbeard.githubuserfinder.R;
 import com.makbeard.githubuserfinder.UsersRecyclerViewAdapter;
@@ -30,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import butterknife.BindView;
 import butterknife.ButterKnife;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -91,9 +83,8 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerViewAdapter = new UsersRecyclerViewAdapter(mGitUsersList);
         mRecyclerView = (RecyclerView) findViewById(R.id.gitusers_recyclerview);
         mRecyclerView.setAdapter(mRecyclerViewAdapter);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-
+        mRecyclerView.setLayoutManager(
+                new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
     }
 
     @Override
@@ -121,21 +112,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .subscribe();
-        String[] colNames = new String[] {"_id", "Login"};
-        MatrixCursor cursor = new MatrixCursor(colNames);
-        cursor.addRow(new String[]{"1", "'Murica"});
-        cursor.addRow(new String[]{"2", "Canada"});
-        cursor.addRow(new String[]{"3", "Denmark"});
+        // TODO: 15.05.2016 Сохранять ответы в кэш с помощью Realm на 1 минуту
+        // TODO: 15.05.2016 Сохранять запросы в кэш с помощью Realm
+        // TODO: 15.05.2016 Сделать SearchView history
+        // TODO: 15.05.2016 Сделать поток чтения из БД c помощью Rx
 
-        mSearchView.setSuggestionsAdapter(
-                new SimpleCursorAdapter(
-                        this,
-                        android.R.layout.simple_list_item_1,
-                        cursor,
-                        new String[] {"Login"},
-                        new int[] {android.R.id.text1},
-                        0)
-        );
+
+
         return true;
     }
 

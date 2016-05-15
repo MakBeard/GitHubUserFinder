@@ -32,7 +32,6 @@ public class UsersRecyclerViewAdapter
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-//        CardView cardView = holder.mCardView;
 
         TextView nameTextView = holder.mLoginTextView;
         nameTextView.setText(mUsersList.get(position).getLogin());
