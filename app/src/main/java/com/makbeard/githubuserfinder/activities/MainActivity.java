@@ -2,6 +2,8 @@ package com.makbeard.githubuserfinder.activities;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.EditText;
 
@@ -11,9 +13,12 @@ import com.jakewharton.rxbinding.widget.RxTextView;
 import com.jakewharton.rxbinding.widget.TextViewTextChangeEvent;
 import com.makbeard.githubuserfinder.GitHubApi;
 import com.makbeard.githubuserfinder.R;
+import com.makbeard.githubuserfinder.UsersRecyclerViewAdapter;
 import com.makbeard.githubuserfinder.model.GitUser;
 import com.makbeard.githubuserfinder.model.RootUsersResponse;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -45,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
     EditText mSearchEditText;
 
     private Subscription mSubscription;
+    private List<GitUser> mGitUsersList = new ArrayList<>();
+    private UsersRecyclerViewAdapter mRecyclerViewAdapter;
+    private RecyclerView mRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
         Gson gson = new GsonBuilder()
                 .create();
 
+        //Настраиваем Retrofit
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(GitHubApi.ROOT_URL)
                 .client(client)
@@ -73,6 +82,12 @@ public class MainActivity extends AppCompatActivity {
 
         final GitHubApi gitHubApi = retrofit.create(GitHubApi.class);
 
+        mRecyclerViewAdapter = new UsersRecyclerViewAdapter(mGitUsersList);
+        mRecyclerView = (RecyclerView) findViewById(R.id.gitusers_recyclerview);
+        mRecyclerView.setAdapter(mRecyclerViewAdapter);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        //Создаём слушателя для поля ввода
         mSubscription = RxTextView.textChangeEvents(mSearchEditText)
                 .debounce(1000, TimeUnit.MILLISECONDS)
                 .filter(new Func1<TextViewTextChangeEvent, Boolean>() {
@@ -91,6 +106,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .subscribe();
+
+
+
     }
 
     private Subscriber<RootUsersResponse> getUsersSubscriber() {
@@ -107,8 +125,10 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onNext(RootUsersResponse rootUsersResponse) {
+                mRecyclerViewAdapter.updateAll(rootUsersResponse.items);
                 for (GitUser gitUser : rootUsersResponse.items) {
                     Log.d(TAG, "onNext: " + gitUser.getLogin() + " " + gitUser.getAvatarUrl() + " " + gitUser.getHtmlUrl());
+
                 }
             }
         };
