@@ -13,11 +13,17 @@ import android.view.animation.Interpolator;
 import android.widget.ArrayAdapter;
 import android.widget.SearchView;
 
+import com.arlib.floatingsearchview.FloatingSearchView;
+import com.arlib.floatingsearchview.suggestions.SearchSuggestionsAdapter;
+import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion;
+import com.arlib.floatingsearchview.util.view.BodyTextView;
+import com.arlib.floatingsearchview.util.view.IconImageView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.jakewharton.rxbinding.widget.RxSearchView;
 import com.makbeard.githubuserfinder.GitHubApi;
 import com.makbeard.githubuserfinder.R;
+import com.makbeard.githubuserfinder.UserSuggestion;
 import com.makbeard.githubuserfinder.UsersRecyclerViewAdapter;
 import com.makbeard.githubuserfinder.model.GitUser;
 import com.makbeard.githubuserfinder.model.RootUsersResponse;
@@ -47,16 +53,14 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MA_MAKTAG";
 
-    SearchView mSearchView;
-
     private Subscription mSubscription;
     private List<GitUser> mGitUsersList = new ArrayList<>();
     private UsersRecyclerViewAdapter mRecyclerViewAdapter;
     private RecyclerView mRecyclerView;
     private GitHubApi mGitHubApi;
 
-    @BindView(R.id.searchbox)
-    SearchBox mSearchBox;
+    @BindView(R.id.floatingSearchView)
+    FloatingSearchView mFloatingSearchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,42 +78,37 @@ public class MainActivity extends AppCompatActivity {
         Observable<String> searchBoxObservable = Observable.create(new rx.Observable.OnSubscribe<String>() {
             @Override
             public void call(final Subscriber<? super String> subscriber) {
-                mSearchBox.setSearchListener(new SearchBox.SearchListener() {
+                mFloatingSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener() {
                     @Override
-                    public void onSearchOpened() {
-
-                    }
-
-                    @Override
-                    public void onSearchCleared() {
-
-                    }
-
-                    @Override
-                    public void onSearchClosed() {
-
-                    }
-
-                    @Override
-                    public void onSearchTermChanged(String s) {
-                        subscriber.onNext(s);
-
-                    }
-
-                    @Override
-                    public void onSearch(String s) {
-                        // TODO: 15.05.2016 Сохранять запросы в кэш с помощью Realm
-                        subscriber.onCompleted();
-                    }
-
-                    @Override
-                    public void onResultClick(SearchResult searchResult) {
+                    public void onSearchTextChanged(String oldQuery, String newQuery) {
+                        subscriber.onNext(newQuery);
 
                     }
                 });
             }
         });
 
+        final List<UserSuggestion> userSuggestionList = new ArrayList<>();
+
+        mFloatingSearchView.setOnFocusChangeListener(new FloatingSearchView.OnFocusChangeListener() {
+            @Override
+            public void onFocus() {
+
+                UserSuggestion userSuggestion;
+                for(int i=0; i<10; i++){
+                    userSuggestion = new UserSuggestion("User " + i);
+                    userSuggestion.setIsHistory(true);
+                    userSuggestionList.add(userSuggestion);
+                }
+
+                mFloatingSearchView.swapSuggestions(userSuggestionList);
+            }
+
+            @Override
+            public void onFocusCleared() {
+
+            }
+        });
         mSubscription = searchBoxObservable
                 .debounce(1000, TimeUnit.MILLISECONDS)
                 .filter(new Func1<CharSequence, Boolean>() {
@@ -173,8 +172,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
-
-        mSearchBox.revealFromMenuItem(R.id.action_search, this);
 /*
         mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
 
