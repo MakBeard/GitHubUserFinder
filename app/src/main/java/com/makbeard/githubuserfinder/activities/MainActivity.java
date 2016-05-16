@@ -12,7 +12,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.makbeard.githubuserfinder.GitHubApi;
 import com.makbeard.githubuserfinder.R;
-import com.makbeard.githubuserfinder.UserSuggestion;
+import com.makbeard.githubuserfinder.GitSearchSuggestion;
 import com.makbeard.githubuserfinder.UsersRecyclerViewAdapter;
 import com.makbeard.githubuserfinder.model.GitUser;
 import com.makbeard.githubuserfinder.model.RootUsersResponse;
@@ -66,26 +66,26 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSearchTextChanged(String oldQuery, String newQuery) {
                         subscriber.onNext(newQuery);
-
                     }
                 });
             }
         });
 
-        final List<UserSuggestion> userSuggestionList = new ArrayList<>();
+        final List<GitSearchSuggestion> gitSearchSuggestionList = new ArrayList<>();
 
         mFloatingSearchView.setOnFocusChangeListener(new FloatingSearchView.OnFocusChangeListener() {
             @Override
             public void onFocus() {
 
-                UserSuggestion userSuggestion;
+                //Выпадающий список
+                GitSearchSuggestion gitSearchSuggestion;
                 for(int i=0; i<10; i++){
-                    userSuggestion = new UserSuggestion("User " + i);
-                    userSuggestion.setIsHistory(true);
-                    userSuggestionList.add(userSuggestion);
+                    gitSearchSuggestion = new GitSearchSuggestion("User " + i);
+                    gitSearchSuggestion.setIsHistory(true);
+                    gitSearchSuggestionList.add(gitSearchSuggestion);
                 }
 
-                mFloatingSearchView.swapSuggestions(userSuggestionList);
+                mFloatingSearchView.swapSuggestions(gitSearchSuggestionList);
             }
 
             @Override
@@ -151,10 +151,9 @@ public class MainActivity extends AppCompatActivity {
         return retrofit.create(GitHubApi.class);
     }
 
-        // TODO: 15.05.2016 Сохранять ответы в кэш с помощью Realm на 1 минуту
-
-        // TODO: 15.05.2016 Сделать SearchView history
-        // TODO: 15.05.2016 Сделать поток чтения из БД c помощью Rx
+    // TODO: 15.05.2016 Сохранять ответы в кэш с помощью Realm на 1 минуту
+    // TODO: 15.05.2016 Сделать SearchView history
+    // TODO: 15.05.2016 Сделать поток чтения из БД c помощью Rx
 
     private Subscriber<RootUsersResponse> getUsersSubscriber() {
         return new Subscriber<RootUsersResponse>() {

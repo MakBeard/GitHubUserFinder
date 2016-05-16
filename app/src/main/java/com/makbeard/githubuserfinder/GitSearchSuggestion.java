@@ -1,23 +1,22 @@
 package com.makbeard.githubuserfinder;
 
 import android.os.Parcel;
-import android.os.Parcelable;
 
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion;
 
 /**
- * Created by Hp on 16.05.2016.
+ * Класс для отображения в выпадающем списке
  */
-public class UserSuggestion implements SearchSuggestion {
+public class GitSearchSuggestion implements SearchSuggestion {
 
     private String mUserName;
     private boolean mIsHistory;
 
-    public UserSuggestion(String userName) {
+    public GitSearchSuggestion(String userName) {
         mUserName = userName;
     }
 
-    public UserSuggestion(Parcel source) {
+    public GitSearchSuggestion(Parcel source) {
         mUserName = source.readString();
     }
 
@@ -53,15 +52,15 @@ public class UserSuggestion implements SearchSuggestion {
         dest.writeString(mUserName);
     }
 
-    public static final Creator<UserSuggestion> CREATOR = new Creator<UserSuggestion>() {
+    public static final Creator<GitSearchSuggestion> CREATOR = new Creator<GitSearchSuggestion>() {
         @Override
-        public UserSuggestion createFromParcel(Parcel source) {
-            return new UserSuggestion(source);
+        public GitSearchSuggestion createFromParcel(Parcel source) {
+            return new GitSearchSuggestion(source);
         }
 
         @Override
-        public UserSuggestion[] newArray(int size) {
-            return new UserSuggestion[size];
+        public GitSearchSuggestion[] newArray(int size) {
+            return new GitSearchSuggestion[size];
         }
     };
 }

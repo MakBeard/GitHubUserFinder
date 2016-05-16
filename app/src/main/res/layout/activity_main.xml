@@ -5,16 +5,34 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
     tools:context=".activities.MainActivity">
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fitsSystemWindows="true"
         android:theme="@style/AppTheme.AppBarOverlay">
 
+
+        <com.arlib.floatingsearchview.FloatingSearchView
+            android:id="@+id/floatingSearchView"
+            app:floatingSearch_searchHint="User credentials"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:contentScrim="?attr/colorPrimary"
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:floatingSearch_leftActionMode="showHamburger" />
+        <!--
+        <android.support.v7.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:layout_scrollFlags="scroll|enterAlways">
+
+
+
+        </android.support.v7.widget.Toolbar>
+        -->
+        <!--
         <android.support.design.widget.CollapsingToolbarLayout
             android:id="@+id/collapsing_toolbar"
             android:layout_width="match_parent"
@@ -22,14 +40,8 @@
             app:layout_scrollFlags="scroll|enterAlways"
             app:contentScrim="?attr/colorPrimary">
 
-            <com.arlib.floatingsearchview.FloatingSearchView
-                android:id="@+id/floatingSearchView"
-                app:floatingSearch_searchHint="User credentials"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:floatingSearch_leftActionMode="showHamburger" />
-
         </android.support.design.widget.CollapsingToolbarLayout>
+        -->
 
     </android.support.design.widget.AppBarLayout>
 
