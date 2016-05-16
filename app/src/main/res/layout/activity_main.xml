@@ -27,10 +27,16 @@
             <android.support.v7.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="86dp"
+                android:layout_height="wrap_content"
                 app:layout_collapseMode="parallax"
-                app:popupTheme="@style/AppTheme.PopupOverlay"/>
+                app:popupTheme="@style/AppTheme.PopupOverlay">
 
+                <com.quinny898.library.persistentsearch.SearchBox
+                    android:id="@+id/searchbox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+            </android.support.v7.widget.Toolbar>
 
         </android.support.design.widget.CollapsingToolbarLayout>
 
