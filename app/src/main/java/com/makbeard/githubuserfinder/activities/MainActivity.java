@@ -4,31 +4,18 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.animation.Interpolator;
-import android.widget.ArrayAdapter;
-import android.widget.SearchView;
 
 import com.arlib.floatingsearchview.FloatingSearchView;
-import com.arlib.floatingsearchview.suggestions.SearchSuggestionsAdapter;
-import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion;
-import com.arlib.floatingsearchview.util.view.BodyTextView;
-import com.arlib.floatingsearchview.util.view.IconImageView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.jakewharton.rxbinding.widget.RxSearchView;
 import com.makbeard.githubuserfinder.GitHubApi;
 import com.makbeard.githubuserfinder.R;
 import com.makbeard.githubuserfinder.UserSuggestion;
 import com.makbeard.githubuserfinder.UsersRecyclerViewAdapter;
 import com.makbeard.githubuserfinder.model.GitUser;
 import com.makbeard.githubuserfinder.model.RootUsersResponse;
-import com.quinny898.library.persistentsearch.SearchBox;
-import com.quinny898.library.persistentsearch.SearchResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,9 +55,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         ButterKnife.bind(this);
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         mGitHubApi = initRetrofit();
 
@@ -167,41 +151,10 @@ public class MainActivity extends AppCompatActivity {
         return retrofit.create(GitHubApi.class);
     }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-/*
-        mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-
-        mSubscription = RxSearchView.queryTextChanges(mSearchView)
-                .debounce(1000, TimeUnit.MILLISECONDS)
-                .filter(new Func1<CharSequence, Boolean>() {
-                    @Override
-                    public Boolean call(CharSequence charSequence) {
-                        return !TextUtils.isEmpty(charSequence);
-                    }
-                })
-                .doOnNext(new Action1<CharSequence>() {
-                    @Override
-                    public void call(CharSequence charSequence) {
-                        mGitHubApi.getUsersList(charSequence.toString())
-                                .subscribeOn(Schedulers.newThread())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(getUsersSubscriber());
-                    }
-                })
-                .subscribe();
-*/
-
         // TODO: 15.05.2016 Сохранять ответы в кэш с помощью Realm на 1 минуту
 
         // TODO: 15.05.2016 Сделать SearchView history
         // TODO: 15.05.2016 Сделать поток чтения из БД c помощью Rx
-
-        return true;
-    }
 
     private Subscriber<RootUsersResponse> getUsersSubscriber() {
         return new Subscriber<RootUsersResponse>() {
