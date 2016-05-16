@@ -6,6 +6,7 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -13,6 +14,7 @@ import android.util.Log;
 import com.arlib.floatingsearchview.FloatingSearchView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.jakewharton.rxbinding.support.v7.widget.RxSearchView;
 import com.makbeard.githubuserfinder.GitHubApi;
 import com.makbeard.githubuserfinder.R;
 import com.makbeard.githubuserfinder.GitSearchSuggestion;
@@ -32,6 +34,7 @@ import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Observable;
+import rx.Observer;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -60,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
 
+    @BindView(R.id.searchview)
+    SearchView mSearchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
 
         final List<GitSearchSuggestion> gitSearchSuggestionList = new ArrayList<>();
 
-
         mFloatingSearchView.setOnFocusChangeListener(
                 new FloatingSearchView.OnFocusChangeListener() {
             @Override
@@ -110,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mSubscription = searchBoxObservable
+        mSubscription = RxSearchView.queryTextChanges(mSearchView)
                 .debounce(1000, TimeUnit.MILLISECONDS)
                 .filter(new Func1<CharSequence, Boolean>() {
                     @Override
