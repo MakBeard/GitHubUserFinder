@@ -1,6 +1,8 @@
 package com.makbeard.githubuserfinder.activities;
 
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -49,11 +51,15 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.floatingSearchView)
     FloatingSearchView mFloatingSearchView;
 
+    @BindView(R.id.gitusers_recyclerview)
+    RecyclerView mRecyclerView;
+
+    @BindView(R.id.app_bar)
+    AppBarLayout mAppBarLayout;
+
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
 
-    @BindView(R.id.gitusers_recyclerview)
-    RecyclerView mRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,8 +67,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         ButterKnife.bind(this);
-
-        setSupportActionBar(mToolbar);
 
         mGitHubApi = initRetrofit();
 
@@ -82,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         final List<GitSearchSuggestion> gitSearchSuggestionList = new ArrayList<>();
+
 
         mFloatingSearchView.setOnFocusChangeListener(
                 new FloatingSearchView.OnFocusChangeListener() {
@@ -147,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
     private GitHubApi initRetrofit(){
         //Создаём interceptor для анализа логов
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BASIC);
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(interceptor)
