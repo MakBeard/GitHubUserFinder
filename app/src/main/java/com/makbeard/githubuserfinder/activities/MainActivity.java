@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -43,11 +44,16 @@ public class MainActivity extends AppCompatActivity {
     private Subscription mSubscription;
     private List<GitUser> mGitUsersList = new ArrayList<>();
     private UsersRecyclerViewAdapter mRecyclerViewAdapter;
-    private RecyclerView mRecyclerView;
     private GitHubApi mGitHubApi;
 
     @BindView(R.id.floatingSearchView)
     FloatingSearchView mFloatingSearchView;
+
+    @BindView(R.id.toolbar)
+    Toolbar mToolbar;
+
+    @BindView(R.id.gitusers_recyclerview)
+    RecyclerView mRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,13 +62,17 @@ public class MainActivity extends AppCompatActivity {
 
         ButterKnife.bind(this);
 
+        setSupportActionBar(mToolbar);
+
         mGitHubApi = initRetrofit();
 
         //Создаём Observable из кастомного SearchBox
-        Observable<String> searchBoxObservable = Observable.create(new rx.Observable.OnSubscribe<String>() {
+        Observable<String> searchBoxObservable =
+                Observable.create(new rx.Observable.OnSubscribe<String>() {
             @Override
             public void call(final Subscriber<? super String> subscriber) {
-                mFloatingSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener() {
+                mFloatingSearchView.setOnQueryChangeListener(
+                        new FloatingSearchView.OnQueryChangeListener() {
                     @Override
                     public void onSearchTextChanged(String oldQuery, String newQuery) {
                         subscriber.onNext(newQuery);
@@ -73,7 +83,8 @@ public class MainActivity extends AppCompatActivity {
 
         final List<GitSearchSuggestion> gitSearchSuggestionList = new ArrayList<>();
 
-        mFloatingSearchView.setOnFocusChangeListener(new FloatingSearchView.OnFocusChangeListener() {
+        mFloatingSearchView.setOnFocusChangeListener(
+                new FloatingSearchView.OnFocusChangeListener() {
             @Override
             public void onFocus() {
 
@@ -93,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
         mSubscription = searchBoxObservable
                 .debounce(1000, TimeUnit.MILLISECONDS)
                 .filter(new Func1<CharSequence, Boolean>() {
@@ -104,17 +116,22 @@ public class MainActivity extends AppCompatActivity {
                 .doOnNext(new Action1<CharSequence>() {
                     @Override
                     public void call(CharSequence charSequence) {
+                        // TODO: 16.05.2016 Сохраняем запрос в БД
                         mGitHubApi.getUsersList(charSequence.toString())
                                 .subscribeOn(Schedulers.newThread())
                                 .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(getUsersSubscriber());
+                                .doOnNext(new Action1<RootUsersResponse>() {
+                                    @Override
+                                    public void call(RootUsersResponse rootUsersResponse) {
+                                        mRecyclerViewAdapter.updateAll(rootUsersResponse.items);
+                                    }
+                                })
+                                .subscribe();
                     }
                 })
                 .subscribe();
 
-
         //Настраиваем отображение RecyclerView
-        mRecyclerView = (RecyclerView) findViewById(R.id.gitusers_recyclerview);
         mRecyclerViewAdapter = new UsersRecyclerViewAdapter(mGitUsersList);
 
         if (mRecyclerView != null) {
@@ -123,7 +140,6 @@ public class MainActivity extends AppCompatActivity {
                     new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         }
     }
-
 
     /**
      * Метод возвращает настроеный Retrofit для работы с GitHubApi
@@ -154,28 +170,6 @@ public class MainActivity extends AppCompatActivity {
     // TODO: 15.05.2016 Сохранять ответы в кэш с помощью Realm на 1 минуту
     // TODO: 15.05.2016 Сделать SearchView history
     // TODO: 15.05.2016 Сделать поток чтения из БД c помощью Rx
-
-    private Subscriber<RootUsersResponse> getUsersSubscriber() {
-        return new Subscriber<RootUsersResponse>() {
-            @Override
-            public void onCompleted() {
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            @Override
-            public void onNext(RootUsersResponse rootUsersResponse) {
-                mRecyclerViewAdapter.updateAll(rootUsersResponse.items);
-                for (GitUser gitUser : rootUsersResponse.items) {
-                    Log.d(TAG, "onNext: " + gitUser.getLogin() + " " + gitUser.getAvatarUrl() + " " + gitUser.getHtmlUrl());
-                }
-            }
-        };
-    }
 
     @Override
     protected void onDestroy() {

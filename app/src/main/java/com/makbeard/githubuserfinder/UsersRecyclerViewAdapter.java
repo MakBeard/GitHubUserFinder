@@ -52,12 +52,11 @@ public class UsersRecyclerViewAdapter
         notifyDataSetChanged();
     }
     class ViewHolder extends RecyclerView.ViewHolder{
-        private CardView mCardView;
+
         private TextView mLoginTextView;
 
         public ViewHolder(CardView cardView) {
             super(cardView);
-            mCardView = cardView;
             mLoginTextView = (TextView) cardView.findViewById(R.id.login_textview);
         }
     }
