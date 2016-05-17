@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">GitHubUserFinder</string>
+    <string name="app_name">GitHub User Finder</string>
     <string name="search_hint">Enter user data</string>
     <string name="search_label">Search</string>
     <string name="login">Login</string>

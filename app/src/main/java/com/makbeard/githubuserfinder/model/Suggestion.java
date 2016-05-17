@@ -21,8 +21,7 @@ public class Suggestion extends RealmObject {
         mSuggestion = suggestion;
     }
 
-    @Override
-    public String toString() {
+    public String getSuggestion() {
         return mSuggestion;
     }
 }

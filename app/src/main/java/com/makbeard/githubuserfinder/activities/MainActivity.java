@@ -196,27 +196,38 @@ public class MainActivity extends AppCompatActivity {
         //При изменении данных в БД меням Suggestion адаптер
         mCompositeSubscription.add(
                 realmObservable
-                .subscribe(new Action1<RealmResults<Suggestion>>() {
+                    .filter(new Func1<RealmResults<Suggestion>, Boolean>() {
+                        @Override
+                        public Boolean call(RealmResults<Suggestion> suggestions) {
+                            return suggestions != null;
+                        }
+                    })
+                    .subscribe(new Action1<RealmResults<Suggestion>>() {
                     @Override
-                    public void call(RealmResults<Suggestion> gitUsers) {
-                        if (!gitUsers.isEmpty()) {
-                            String[] temp = new String[2];
-                            Iterator iterator =
-                                    gitUsers.subList(gitUsers.size() - 5, gitUsers.size())
-                                            .iterator();
-                            int i = 0;
+                    public void call(RealmResults<Suggestion> suggestions) {
+
                             MatrixCursor matrixCursor =
                                     new MatrixCursor(new String[] {"_id", "Suggestion"});
-                            do {
+                            String[] temp = new String[2];
+                            int i = 0;
+                            List<Suggestion> subList;
+
+                            //Отбираем не более 5 значений
+                            if (suggestions.size() > 5) {
+                                subList = suggestions.subList(suggestions.size() - 5, suggestions.size());
+                            } else {
+                                subList = suggestions;
+                            }
+
+                            for (Suggestion suggestion : subList) {
                                 temp[0] = Integer.toString(i++);
-                                temp[1] = iterator.next().toString();
+                                temp[1] = suggestion.getSuggestion();
                                 matrixCursor.addRow(temp);
-                            } while (iterator.hasNext());
+                            }
 
                             mAdapter.changeCursor(matrixCursor);
                             mAdapter.notifyDataSetChanged();
                         }
-                    }
                 })
         );
 
