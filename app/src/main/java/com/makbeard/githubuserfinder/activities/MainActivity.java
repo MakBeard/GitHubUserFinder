@@ -5,6 +5,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -14,8 +16,10 @@ import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -54,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MA_MAKTAG";
 
     private CompositeSubscription mCompositeSubscription;
-    private List<GitUser> mGitUsersList = new ArrayList<>();
     private UsersRecyclerViewAdapter mRecyclerViewAdapter;
     private GitHubApi mGitHubApi;
     private Realm mRealm;
@@ -97,9 +100,11 @@ public class MainActivity extends AppCompatActivity {
             mRecyclerViewAdapter.setListener(new UsersRecyclerViewAdapter.IClickListener() {
                 @Override
                 public void onClick(int position) {
-                    Intent intent = new Intent(Intent.ACTION_VIEW,
-                            Uri.parse(mRecyclerViewAdapter.getItem(position).getHtmlUrl()));
-                    startActivity(intent);
+                    if (mRecyclerViewAdapter.getItem(position).getHtmlUrl() != null) {
+                        Intent intent = new Intent(Intent.ACTION_VIEW,
+                                Uri.parse(mRecyclerViewAdapter.getItem(position).getHtmlUrl()));
+                        startActivity(intent);
+                    }
                 }
             });
             mRecyclerView.setAdapter(mRecyclerViewAdapter);
@@ -114,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
     private GitHubApi initRetrofit(){
         //Создаём interceptor для анализа логов
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-        interceptor.setLevel(HttpLoggingInterceptor.Level.BASIC);
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(interceptor)
@@ -133,8 +138,6 @@ public class MainActivity extends AppCompatActivity {
 
         return retrofit.create(GitHubApi.class);
     }
-
-    // TODO: 15.05.2016 Сохранять ответы в кэш с помощью Realm на 1 минуту
 
     @Override
     protected void onDestroy() {
@@ -256,14 +259,31 @@ public class MainActivity extends AppCompatActivity {
                         realm.commitTransaction();
 
                         mGitHubApi.getUsersList(charSequence.toString())
+                                .onErrorReturn(new Func1<Throwable, RootUsersResponse>() {
+                                    //Обрабатываем отсутствие интернета
+                                    @Override
+                                    public RootUsersResponse call(Throwable throwable) {
+                                        RootUsersResponse rur = new RootUsersResponse();
+                                        rur.items = new ArrayList<>();
+                                        rur.items.add(new GitUser("Check internet connection"));
+                                        return rur;
+                                    }
+                                })
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribeOn(Schedulers.newThread())
                                 .doOnNext(new Action1<RootUsersResponse>() {
                                     @Override
                                     public void call(RootUsersResponse rootUsersResponse) {
                                         mRecyclerViewAdapter.updateAll(rootUsersResponse.items);
-                                    }
-                                })
+                                        mSearchView.clearFocus();
+                                        }
+                                    })
+                                    .doOnError(new Action1<Throwable>() {
+                                        @Override
+                                        public void call(Throwable throwable) {
+                                            Log.d(TAG, "call: " + throwable.toString());
+                                        }
+                                    })
                                 .subscribe();
                     }
                 })
