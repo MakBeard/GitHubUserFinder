@@ -2,8 +2,10 @@ package com.makbeard.githubuserfinder.activities;
 
 import android.app.SearchManager;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,18 +14,11 @@ import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.support.v4.widget.SimpleCursorAdapter;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.MotionEvent;
-import android.view.View;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.jakewharton.rxbinding.support.v7.widget.RecyclerViewChildAttachStateChangeEvent;
-import com.jakewharton.rxbinding.support.v7.widget.RecyclerViewScrollEvent;
-import com.jakewharton.rxbinding.support.v7.widget.RxRecyclerView;
-import com.jakewharton.rxbinding.support.v7.widget.RxRecyclerViewAdapter;
 import com.jakewharton.rxbinding.support.v7.widget.RxSearchView;
 import com.makbeard.githubuserfinder.GitHubApi;
 import com.makbeard.githubuserfinder.R;
@@ -39,8 +34,6 @@ import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.OnItemClick;
-import butterknife.OnItemSelected;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import io.realm.RealmResults;
@@ -96,11 +89,19 @@ public class MainActivity extends AppCompatActivity {
         mRealm = Realm.getInstance(mRealmConfig);
 
         //Настраиваем отображение RecyclerView
-        mRecyclerViewAdapter = new UsersRecyclerViewAdapter(mGitUsersList);
+//        mRecyclerViewAdapter = new UsersRecyclerViewAdapter(mGitUsersList);
+        mRecyclerViewAdapter = new UsersRecyclerViewAdapter(new ArrayList<GitUser>());
 
         if (mRecyclerView != null) {
 
-
+            mRecyclerViewAdapter.setListener(new UsersRecyclerViewAdapter.IClickListener() {
+                @Override
+                public void onClick(int position) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse(mRecyclerViewAdapter.getItem(position).getHtmlUrl()));
+                    startActivity(intent);
+                }
+            });
             mRecyclerView.setAdapter(mRecyclerViewAdapter);
             mRecyclerView.setLayoutManager(
                     new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
