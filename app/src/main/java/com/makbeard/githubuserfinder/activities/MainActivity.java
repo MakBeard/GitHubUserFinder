@@ -138,11 +138,12 @@ public class MainActivity extends AppCompatActivity {
 
         mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
 
+        //Настраиваем отображение последних запросов
         final String[] from = new String[] {"Suggestion"};
-        final int[] to = new int[] {android.R.id.text1};
+        final int[] to = new int[] {R.id.suggestion_text};
 
         mAdapter = new SimpleCursorAdapter(this,
-                android.R.layout.simple_list_item_activated_1,
+                R.layout.suggestion_item,
                 null,
                 from,
                 to,
@@ -150,7 +151,6 @@ public class MainActivity extends AppCompatActivity {
 
         mSearchView.setSuggestionsAdapter(mAdapter);
 
-        // TODO: 17.05.2016 Превратить SuggestionListener в Rx Observable
         mSearchView.setOnSuggestionListener(new SearchView.OnSuggestionListener() {
             @Override
             public boolean onSuggestionSelect(int position) {
