@@ -1,5 +1,7 @@
 package com.makbeard.githubuserfinder.activities;
 
+import android.app.SearchManager;
+import android.app.SearchableInfo;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.os.Bundle;
@@ -110,7 +112,11 @@ public class MainActivity extends AppCompatActivity
 //        Observable<String> suggestionObservable =
 
         mSearchView.setOnSuggestionListener(this);
+        mSearchView.setIconifiedByDefault(false);
         mSearchView.setQueryHint("Enter User Data");
+        SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
+        SearchableInfo searchableInfo = searchManager.getSearchableInfo(getComponentName());
+        mSearchView.setSearchableInfo(searchableInfo);
 
         /*
         searchView.setOnQueryTextListener(this);
@@ -198,6 +204,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onSuggestionSelect(int position) {
+        Log.d(TAG, "onSuggestionSelect: " + mAdapter.getItem(position).toString());
         Cursor c = mAdapter.getCursor();
         if(c.moveToPosition(position)) {
             String selectedItem = c.getString(1);
@@ -208,6 +215,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onSuggestionClick(int position) {
+        Log.d(TAG, "onSuggestionSelect: " + mAdapter.getItem(position).toString());
         return false;
     }
 }
