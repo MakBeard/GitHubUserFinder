@@ -1,8 +1,13 @@
 package com.makbeard.githubuserfinder;
 
+import android.content.Intent;
+import android.net.Uri;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
@@ -27,6 +32,7 @@ public class UsersRecyclerViewAdapter
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         CardView cardView = (CardView) LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.user_cardview, parent, false);
+        cardView.setClickable(true);
         return new ViewHolder(cardView);
     }
 
@@ -51,7 +57,7 @@ public class UsersRecyclerViewAdapter
         mUsersList.addAll(list);
         notifyDataSetChanged();
     }
-    class ViewHolder extends RecyclerView.ViewHolder{
+    class ViewHolder extends RecyclerView.ViewHolder {
 
         private TextView mLoginTextView;
 
