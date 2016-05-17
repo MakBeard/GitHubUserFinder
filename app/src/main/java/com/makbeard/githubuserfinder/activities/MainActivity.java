@@ -1,11 +1,8 @@
 package com.makbeard.githubuserfinder.activities;
 
-import android.app.SearchManager;
-import android.app.SearchableInfo;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.os.Bundle;
-import android.provider.BaseColumns;
 import android.support.design.widget.AppBarLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,17 +10,16 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.support.v4.widget.CursorAdapter;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 
-import com.arlib.floatingsearchview.FloatingSearchView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.jakewharton.rxbinding.support.v7.widget.RxSearchView;
 import com.makbeard.githubuserfinder.GitHubApi;
 import com.makbeard.githubuserfinder.R;
-import com.makbeard.githubuserfinder.GitSearchSuggestion;
 import com.makbeard.githubuserfinder.UsersRecyclerViewAdapter;
 import com.makbeard.githubuserfinder.model.GitUser;
 import com.makbeard.githubuserfinder.model.RootUsersResponse;
@@ -39,7 +35,6 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
-import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
@@ -56,9 +51,6 @@ public class MainActivity extends AppCompatActivity
     private UsersRecyclerViewAdapter mRecyclerViewAdapter;
     private GitHubApi mGitHubApi;
 
-    @BindView(R.id.floatingSearchView)
-    FloatingSearchView mFloatingSearchView;
-
     @BindView(R.id.gitusers_recyclerview)
     RecyclerView mRecyclerView;
 
@@ -68,7 +60,6 @@ public class MainActivity extends AppCompatActivity
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
 
-    @BindView(R.id.searchview)
     SearchView mSearchView;
     private SimpleCursorAdapter mAdapter;
 
@@ -80,6 +71,8 @@ public class MainActivity extends AppCompatActivity
         ButterKnife.bind(this);
 
         mGitHubApi = initRetrofit();
+
+        setSupportActionBar(mToolbar);
 
         String[] columnNames = {"_id", "text"};
         final MatrixCursor cursor = new MatrixCursor(columnNames);
@@ -106,19 +99,12 @@ public class MainActivity extends AppCompatActivity
                 to,
                 0);
 
-        // TODO: 16.05.2016 Перенести SearchView в Menu
-        mSearchView.setSuggestionsAdapter(mAdapter);
 
-//        Observable<String> suggestionObservable =
-
-        mSearchView.setOnSuggestionListener(this);
-        mSearchView.setIconifiedByDefault(false);
-        mSearchView.setQueryHint("Enter User Data");
+        /*
         SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
         SearchableInfo searchableInfo = searchManager.getSearchableInfo(getComponentName());
         mSearchView.setSearchableInfo(searchableInfo);
 
-        /*
         searchView.setOnQueryTextListener(this);
         searchAdapter = new SimpleCursorAdapter(this, R.layout.listentry, null, new String[] { "name" }, new int[] { R.id.name_entry }, 0);
         searchView.setSuggestionsAdapter(searchAdapter)
@@ -127,34 +113,6 @@ public class MainActivity extends AppCompatActivity
 
         searchAdapter.changeCursor(cursor);
         */
-
-        mSubscription = RxSearchView
-                .queryTextChanges(mSearchView)
-                .debounce(1000, TimeUnit.MILLISECONDS)
-                .filter(new Func1<CharSequence, Boolean>() {
-                    @Override
-                    public Boolean call(CharSequence charSequence) {
-                        return !TextUtils.isEmpty(charSequence);
-                    }
-                })
-                .doOnNext(new Action1<CharSequence>() {
-                    @Override
-                    public void call(CharSequence charSequence) {
-                        mAdapter.changeCursor(cursor);
-                        // TODO: 16.05.2016 Сохраняем запрос в БД
-                        mGitHubApi.getUsersList(charSequence.toString())
-                                .subscribeOn(Schedulers.newThread())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .doOnNext(new Action1<RootUsersResponse>() {
-                                    @Override
-                                    public void call(RootUsersResponse rootUsersResponse) {
-                                        mRecyclerViewAdapter.updateAll(rootUsersResponse.items);
-                                    }
-                                })
-                                .subscribe();
-                    }
-                })
-                .subscribe();
 
         //Настраиваем отображение RecyclerView
         mRecyclerViewAdapter = new UsersRecyclerViewAdapter(mGitUsersList);
@@ -200,6 +158,49 @@ public class MainActivity extends AppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
         mSubscription.unsubscribe();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+
+        mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+
+        // TODO: 16.05.2016 Перенести SearchView в Menu
+        mSearchView.setSuggestionsAdapter(mAdapter);
+        mSearchView.setOnSuggestionListener(this);
+        mSearchView.setIconifiedByDefault(false);
+        mSearchView.setQueryHint("Enter User Data");
+
+        mSubscription = RxSearchView
+                .queryTextChanges(mSearchView)
+                .debounce(1000, TimeUnit.MILLISECONDS)
+                .filter(new Func1<CharSequence, Boolean>() {
+                    @Override
+                    public Boolean call(CharSequence charSequence) {
+                        return !TextUtils.isEmpty(charSequence);
+                    }
+                })
+                .doOnNext(new Action1<CharSequence>() {
+                    @Override
+                    public void call(CharSequence charSequence) {
+                        // TODO: 16.05.2016 Сохраняем запрос в БД
+                        mGitHubApi.getUsersList(charSequence.toString())
+                                .subscribeOn(Schedulers.newThread())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .doOnNext(new Action1<RootUsersResponse>() {
+                                    @Override
+                                    public void call(RootUsersResponse rootUsersResponse) {
+                                        mRecyclerViewAdapter.updateAll(rootUsersResponse.items);
+                                    }
+                                })
+                                .subscribe();
+                    }
+                })
+                .subscribe();
+
+        return true;
     }
 
     @Override
