@@ -42,7 +42,6 @@ import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Observable;
-import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
@@ -138,22 +137,6 @@ public class MainActivity extends AppCompatActivity {
         inflater.inflate(R.menu.menu_main, menu);
 
         mSearchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-/*
-        String[] columnNames = {"_id", "text"};
-        final MatrixCursor cursor = new MatrixCursor(columnNames);
-
-        String[] array = {"Bauru", "Sao Paulo", "Rio de Janeiro",
-                "Bahia", "Mato Grosso", "Minas Gerais",
-                "Tocantins", "Rio Grande do Sul"};
-
-        final String[] temp = new String[2];
-        int id = 0;
-        for(String item : array){
-            temp[0] = Integer.toString(id++);
-            temp[1] = item;
-            cursor.addRow(temp);
-        }
-*/
 
         final String[] from = new String[] {"Suggestion"};
         final int[] to = new int[] {android.R.id.text1};
@@ -171,22 +154,20 @@ public class MainActivity extends AppCompatActivity {
         mSearchView.setOnSuggestionListener(new SearchView.OnSuggestionListener() {
             @Override
             public boolean onSuggestionSelect(int position) {
-                Log.d(TAG, "onSuggestionSelect: START");
                 return false;
             }
 
             @Override
             public boolean onSuggestionClick(int position) {
-                Log.d(TAG, "onSuggestionClick: START");
                 Cursor c = mAdapter.getCursor();
                 if(c.moveToPosition(position)) {
                     String selectedItem = c.getString(1);
                     mSearchView.setQuery(selectedItem, true);
-                    Log.d(TAG, "onSuggestionClick cursor: " + selectedItem);
                 }
                 return false;
             }
         });
+
         mSearchView.setQueryHint("Enter User Data");
 
         SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
@@ -208,17 +189,21 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void call(RealmResults<Suggestion> gitUsers) {
                         if (!gitUsers.isEmpty()) {
-                            MatrixCursor c = new MatrixCursor(
-                                    new String[] {"_id", "Suggestion"});
                             String[] temp = new String[2];
-                            Iterator iterator = gitUsers.iterator();
+                            Iterator iterator =
+                                    gitUsers.subList(gitUsers.size() - 5, gitUsers.size())
+                                            .iterator();
                             int i = 0;
+                            MatrixCursor matrixCursor =
+                                    new MatrixCursor(new String[] {"_id", "Suggestion"});
                             do {
                                 temp[0] = Integer.toString(i++);
                                 temp[1] = iterator.next().toString();
-                                c.addRow(temp);
+                                matrixCursor.addRow(temp);
                             } while (iterator.hasNext());
-                            mAdapter.changeCursor(c);
+
+                            mAdapter.changeCursor(matrixCursor);
+                            mAdapter.notifyDataSetChanged();
                         }
                     }
                 })
