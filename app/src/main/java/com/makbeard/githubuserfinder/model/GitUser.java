@@ -9,6 +9,10 @@ public class GitUser {
     private String html_url;
     private String avatar_url;
 
+    public GitUser(String login) {
+        this.login = login;
+    }
+
     public String getLogin() {
         return login;
     }
